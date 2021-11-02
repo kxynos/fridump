@@ -33,6 +33,8 @@ def MENU():
                         help='provide full output directory path. (def: \'dump\')')
     parser.add_argument('-U', '--usb', action='store_true',
                         help='device connected over usb')
+    parser.add_argument('-R', '--remote',type=str, metavar="remote_add",
+                        help='device connected over tcp')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='verbose')
     parser.add_argument('-r', '--read-only', action='store_true',
@@ -53,6 +55,7 @@ arguments = MENU()
 APP_NAME = arguments.process
 DIRECTORY = ""
 USB = arguments.usb
+REMOTE = arguments.remote
 DEBUG_LEVEL = logging.INFO
 STRINGS = arguments.strings
 MAX_SIZE = 20971520
@@ -69,10 +72,14 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=DEBUG_LEVEL)
 # Start a new Session
 session = None
 try:
-    if USB:
-        session = frida.get_usb_device().attach(APP_NAME)
+    if REMOTE:
+        session = frida.get_device_manager().add_remote_device(REMOTE).attach(APP_NAME)
+        print(session)
     else:
-        session = frida.attach(APP_NAME)
+        if USB:
+            session = frida.get_usb_device().attach(APP_NAME)
+        else:
+            session = frida.attach(APP_NAME)
 except Exception as e:
     print("Can't connect to App. Have you connected the device?")
     logging.debug(str(e))
